@@ -1,23 +1,7 @@
-// script.js - Updated with real Firebase integration
+// main.js - Updated main script with Firebase integration
 
-// Import Firebase functions from config
-import { 
-    auth, 
-    db, 
-    storage,
-    collection,
-    doc,
-    setDoc,
-    getDoc,
-    getDocs,
-    updateDoc,
-    query,
-    where,
-    orderBy,
-    onSnapshot,
-    signInAnonymously,
-    onAuthStateChanged
-} from './firebase-config.js';
+// Import Firebase functions (you'll need to set up ES6 modules or use script tags)
+// For now, we'll simulate the Firebase calls until you set up the actual Firebase project
 
 // Global state
 let currentLocation = null;
@@ -27,361 +11,110 @@ let responders = [];
 let currentUser = null;
 let isOnline = navigator.onLine;
 
-// REAL Firebase API - replaces the simulated version
+// Simulated Firebase functions for development (replace with real Firebase when ready)
 const FirebaseAPI = {
-    // Authentication methods
-    async initializeAuth() {
-        try {
-            // Sign in anonymously
-            const userCredential = await signInAnonymously(auth);
-            currentUser = userCredential.user;
-            console.log('User authenticated:', currentUser.uid);
-            return currentUser;
-        } catch (error) {
-            console.error('Auth error:', error);
-            throw error;
-        }
-    },
+  // Simulate user authentication
+  async initializeAuth() {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        currentUser = { uid: 'demo-user-' + Date.now(), isAnonymous: true };
+        console.log('Demo user authenticated:', currentUser.uid);
+        resolve(currentUser);
+      }, 1000);
+    });
+  },
 
-    async getCurrentUser() {
-        return new Promise((resolve) => {
-            onAuthStateChanged(auth, (user) => {
-                resolve(user);
-            });
-        });
-    },
-
-    // EMERGENCY METHODS - Real Firebase implementation
-    async createEmergency(emergencyData) {
-        try {
-            const user = await this.getCurrentUser();
-            if (!user) throw new Error('User must be authenticated');
-
-            const emergencyId = 'EMR' + Date.now();
-            const emergency = {
-                id: emergencyId,
-                userId: user.uid,
-                type: emergencyData.type || 'general',
-                priority: emergencyData.priority || 'P3',
-                location: {
-                    lat: emergencyData.location?.lat || 0,
-                    lng: emergencyData.location?.lng || 0,
-                    accuracy: emergencyData.location?.accuracy || 0,
-                    address: emergencyData.location?.address || ''
-                },
-                status: 'active',
-                description: emergencyData.description || '',
-                mediaUrls: emergencyData.mediaUrls || [],
-                contactPhone: emergencyData.contactPhone || '',
-                responders: {},
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                resolvedAt: null
-            };
-
-            // Save to Firestore
-            await setDoc(doc(db, 'emergencies', emergencyId), emergency);
-            
-            console.log('Emergency created:', emergencyId);
-            return emergency;
-        } catch (error) {
-            console.error('Error creating emergency:', error);
-            throw error;
-        }
-    },
-
-    async getEmergency(emergencyId) {
-        try {
-            const docRef = doc(db, 'emergencies', emergencyId);
-            const docSnap = await getDoc(docRef);
-            
-            if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() };
-            } else {
-                throw new Error('Emergency not found');
-            }
-        } catch (error) {
-            console.error('Error getting emergency:', error);
-            throw error;
-        }
-    },
-
-    async updateEmergencyStatus(emergencyId, status, additionalData = {}) {
-        try {
-            const docRef = doc(db, 'emergencies', emergencyId);
-            const updateData = {
-                status: status,
-                updatedAt: new Date(),
-                ...additionalData
-            };
-            
-            if (status === 'resolved') {
-                updateData.resolvedAt = new Date();
-            }
-            
-            await updateDoc(docRef, updateData);
-            console.log('Emergency status updated');
-            return { success: true };
-        } catch (error) {
-            console.error('Error updating emergency status:', error);
-            throw error;
-        }
-    },
-
-    // USER METHODS
-    async createUserProfile(userData) {
-        try {
-            const user = await this.getCurrentUser();
-            if (!user) throw new Error('User must be authenticated');
-
-            const userProfile = {
-                id: `user-${user.uid}`,
-                userId: user.uid,
-                name: userData.name || '',
-                phone: userData.phone || '',
-                email: userData.email || user.email || '',
-                emergencyContacts: userData.emergencyContacts || [],
-                medicalInfo: userData.medicalInfo || {
-                    bloodType: '',
-                    allergies: [],
-                    conditions: [],
-                    medications: []
-                },
-                location: userData.location || { lat: 0, lng: 0, lastUpdated: new Date() },
-                isResponder: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
-
-            await setDoc(doc(db, 'users', user.uid), userProfile);
-            return userProfile;
-        } catch (error) {
-            console.error('Error creating user profile:', error);
-            throw error;
-        }
-    },
-
-    async getUserProfile(userId) {
-        try {
-            const docRef = doc(db, 'users', userId);
-            const docSnap = await getDoc(docRef);
-            
-            if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() };
-            }
-            return null;
-        } catch (error) {
-            console.error('Error getting user profile:', error);
-            throw error;
-        }
-    },
-
-    // RESPONDER METHODS
-    async findNearbyResponders(location, type, maxDistance = 10) {
-        try {
-            const respondersRef = collection(db, 'responders');
-            const q = query(
-                respondersRef, 
-                where('type', '==', type),
-                where('isAvailable', '==', true),
-                where('isActive', '==', true)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            const nearbyResponders = [];
-            
-            querySnapshot.forEach((doc) => {
-                const responder = { id: doc.id, ...doc.data() };
-                // Calculate distance (simplified)
-                const distance = this.calculateDistance(
-                    location.lat, location.lng,
-                    responder.location?.lat || 0, 
-                    responder.location?.lng || 0
-                );
-                
-                if (distance <= maxDistance) {
-                    responder.distance = distance;
-                    responder.eta = Math.max(3, Math.round(distance * 2)); // Rough ETA calculation
-                    nearbyResponders.push(responder);
-                }
-            });
-            
-            // Sort by distance
-            return nearbyResponders.sort((a, b) => a.distance - b.distance);
-        } catch (error) {
-            console.error('Error finding responders:', error);
-            // Return mock data if database query fails
-            return this.getMockResponders(location);
-        }
-    },
-
-    // Fallback method for demo purposes
-    getMockResponders(location) {
-        return [
-            { 
-                id: 'resp1', 
-                name: 'Dr. Sarah Mwamba', 
-                type: 'Medical', 
-                location: { lat: location.lat + 0.01, lng: location.lng + 0.01 },
-                distance: 0.8,
-                eta: 3,
-                status: 'available',
-                phone: '+260977123456',
-                specialization: 'Emergency Medicine'
-            },
-            { 
-                id: 'resp2', 
-                name: 'James Banda', 
-                type: 'First Aid', 
-                location: { lat: location.lat - 0.01, lng: location.lng + 0.01 },
-                distance: 1.2,
-                eta: 5,
-                status: 'available',
-                phone: '+260966789012',
-                specialization: 'Community First Aid'
-            }
-        ];
-    },
-
-    async assignResponderToEmergency(emergencyId, responderId) {
-        try {
-            const emergencyRef = doc(db, 'emergencies', emergencyId);
-            const responderRef = doc(db, 'responders', responderId);
-            
-            // Update emergency with responder info
-            await updateDoc(emergencyRef, {
-                [`responders.${responderId}`]: {
-                    id: responderId,
-                    assignedAt: new Date(),
-                    status: 'assigned',
-                    eta: 'Calculating...'
-                },
-                updatedAt: new Date()
-            });
-            
-            // Update responder status
-            await updateDoc(responderRef, {
-                isAvailable: false,
-                currentEmergency: emergencyId,
-                updatedAt: new Date()
-            });
-            
-            console.log('Responder assigned to emergency');
-        } catch (error) {
-            console.error('Error assigning responder:', error);
-            throw error;
-        }
-    },
-
-    // MESSAGE METHODS
-    async sendMessage(emergencyId, message, messageType = 'text') {
-        try {
-            const user = await this.getCurrentUser();
-            if (!user) throw new Error('User must be authenticated');
-
-            const messageId = `msg-${Date.now()}`;
-            const messageData = {
-                id: messageId,
-                emergencyId: emergencyId,
-                senderId: user.uid,
-                senderType: 'user',
-                senderName: 'User',
-                message: message,
-                messageType: messageType,
-                timestamp: new Date(),
-                read: false,
-                metadata: {}
-            };
-
-            await setDoc(doc(db, 'messages', messageId), messageData);
-            return messageData;
-        } catch (error) {
-            console.error('Error sending message:', error);
-            throw error;
-        }
-    },
-
-    async addEmergencyMessage(emergencyId, message, senderType = 'user') {
-        return this.sendMessage(emergencyId, message, 'text');
-    },
-
-    async getEmergencyMessages(emergencyId) {
-        try {
-            const messagesRef = collection(db, 'messages');
-            const q = query(
-                messagesRef, 
-                where('emergencyId', '==', emergencyId),
-                orderBy('timestamp', 'asc')
-            );
-            
-            const querySnapshot = await getDocs(q);
-            const messages = [];
-            
-            querySnapshot.forEach((doc) => {
-                messages.push({ id: doc.id, ...doc.data() });
-            });
-            
-            return messages;
-        } catch (error) {
-            console.error('Error getting messages:', error);
-            throw error;
-        }
-    },
-
-    // REAL-TIME LISTENERS
-    subscribeToEmergency(emergencyId, callback) {
-        const emergencyRef = doc(db, 'emergencies', emergencyId);
-        return onSnapshot(emergencyRef, (doc) => {
-            if (doc.exists()) {
-                callback({ id: doc.id, ...doc.data() });
-            }
-        });
-    },
-
-    subscribeToEmergencyMessages(emergencyId, callback) {
-        const messagesRef = collection(db, 'messages');
-        const q = query(
-            messagesRef,
-            where('emergencyId', '==', emergencyId),
-            orderBy('timestamp', 'asc')
-        );
+  // Simulate emergency creation
+  async createEmergency(emergencyData) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const emergency = {
+          ...emergencyData,
+          id: 'EMR' + Date.now(),
+          userId: currentUser.uid,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'active',
+          responders: [],
+          messages: []
+        };
         
-        return onSnapshot(q, (querySnapshot) => {
-            const messages = [];
-            querySnapshot.forEach((doc) => {
-                messages.push({ id: doc.id, ...doc.data() });
-            });
-            callback(messages);
-        });
-    },
+        console.log('Emergency created:', emergency);
+        resolve(emergency);
+      }, 500);
+    });
+  },
 
-    // Updated method to work with real Firebase or fallback to mock data
-    async listenToNearbyResponders(location, radiusKm, callback) {
-        try {
-            // Try to get real responders from Firebase
-            const responders = await this.findNearbyResponders(location, 'Medical', radiusKm);
-            callback(responders);
-        } catch (error) {
-            console.log('Using mock responders for demo');
-            // Fallback to mock data
-            const mockResponders = this.getMockResponders(location);
-            callback(mockResponders);
+  // Simulate responder listening
+  async listenToNearbyResponders(location, radiusKm, callback) {
+    setTimeout(() => {
+      const mockResponders = [
+        { 
+          id: 'resp1', 
+          name: 'Dr. Sarah Mwamba', 
+          type: 'Medical', 
+          location: { lat: location.lat + 0.01, lng: location.lng + 0.01 },
+          distance: 0.8,
+          eta: 3,
+          status: 'available',
+          phone: '+260977123456',
+          specialization: 'Emergency Medicine'
+        },
+        { 
+          id: 'resp2', 
+          name: 'James Banda', 
+          type: 'First Aid', 
+          location: { lat: location.lat - 0.01, lng: location.lng + 0.01 },
+          distance: 1.2,
+          eta: 5,
+          status: 'available',
+          phone: '+260966789012',
+          specialization: 'Community First Aid'
+        },
+        { 
+          id: 'resp3', 
+          name: 'Fire Station Central', 
+          type: 'Fire', 
+          location: { lat: location.lat + 0.02, lng: location.lng - 0.01 },
+          distance: 2.1,
+          eta: 8,
+          status: 'available',
+          phone: '+260955123789',
+          specialization: 'Fire & Rescue'
         }
-    },
+      ];
+      callback(mockResponders);
+    }, 1000);
+  },
 
-    // UTILITY METHODS
-    calculateDistance(lat1, lng1, lat2, lng2) {
-        const R = 6371; // Radius of the Earth in kilometers
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c; // Distance in kilometers
-        return distance;
-    }
+  // Simulate emergency updates
+  async updateEmergencyStatus(emergencyId, status, additionalData = {}) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log('Emergency status updated:', { emergencyId, status, ...additionalData });
+        resolve({ success: true });
+      }, 300);
+    });
+  },
+
+  // Simulate message sending
+  async addEmergencyMessage(emergencyId, message, senderType = 'user') {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const messageData = {
+          id: 'msg' + Date.now(),
+          emergencyId,
+          senderId: currentUser.uid,
+          senderType,
+          message,
+          timestamp: new Date(),
+          read: false
+        };
+        console.log('Message sent:', messageData);
+        resolve(messageData);
+      }, 200);
+    });
+  }
 };
 
 // Initialize app with Firebase
@@ -439,6 +172,7 @@ function setupEventListeners() {
     // Quick actions
     document.getElementById('call-emergency').addEventListener('click', function() {
         if (activeEmergency) {
+            // In real app: integrate with WebRTC or phone calling
             alert('Emergency Services: 911\nPolice: 999\nFire: 993');
         } else {
             alert('Emergency Services:\n🚑 Medical: 911\n👮 Police: 999\n🔥 Fire: 993');
@@ -483,9 +217,9 @@ async function confirmEmergency() {
             priority: priority,
             location: currentLocation,
             timestamp: new Date(),
-            description: '',
+            description: '', // Could add description input in modal
             mediaUrls: [],
-            contactPhone: '',
+            contactPhone: '', // Could add contact info
             status: 'active'
         };
 
@@ -500,7 +234,7 @@ async function confirmEmergency() {
         
         updateStatus('Emergency active');
         
-        // Send notifications
+        // Send notifications (simulate for now)
         sendEmergencyNotifications();
         
     } catch (error) {
@@ -564,7 +298,7 @@ function updateResponderDisplay(respondersData) {
             <div>
                 <div class="font-semibold">${responder.name}</div>
                 <div class="text-sm text-gray-600">${responder.specialization || responder.type}</div>
-                <div class="text-xs text-gray-500">${responder.distance ? responder.distance.toFixed(1) : '0.0'}km away</div>
+                <div class="text-xs text-gray-500">${responder.distance.toFixed(1)}km away</div>
             </div>
             <div class="text-right">
                 <div class="text-sm font-medium text-blue-600">ETA: ${responder.eta} min</div>
@@ -620,7 +354,19 @@ async function sendEmergencyNotifications() {
     if (!activeEmergency) return;
 
     try {
+        // In real implementation, this would send SMS notifications
         console.log('Sending notifications for emergency:', activeEmergency.id);
+        
+        // Simulate SMS to emergency contacts
+        const emergencyContacts = ['+260977123456', '+260966789012']; // Demo numbers
+        console.log('SMS sent to emergency contacts:', emergencyContacts);
+        
+        // Simulate notification to official services
+        console.log('Official services notified:', {
+            type: activeEmergency.type,
+            location: activeEmergency.location,
+            priority: activeEmergency.priority
+        });
         
         // Add message to emergency record
         await FirebaseAPI.addEmergencyMessage(
@@ -650,7 +396,7 @@ function showActiveEmergency() {
             <div><strong>Type:</strong> ${emergencyTypes[activeEmergency.type]}</div>
             <div><strong>Priority:</strong> <span class="text-red-600 font-bold">${activeEmergency.priority}</span></div>
             <div><strong>ID:</strong> <code class="text-xs bg-gray-100 px-1 rounded">${activeEmergency.id}</code></div>
-            <div><strong>Time:</strong> ${activeEmergency.createdAt ? activeEmergency.createdAt.toLocaleTimeString() : new Date().toLocaleTimeString()}</div>
+            <div><strong>Time:</strong> ${activeEmergency.timestamp.toLocaleTimeString()}</div>
             <div><strong>Status:</strong> <span class="text-red-600 font-semibold">🔴 ACTIVE</span></div>
             <div id="responder-count" class="text-sm text-gray-600">Searching for responders...</div>
         </div>
@@ -694,7 +440,7 @@ function setupEmergencyChat() {
         chatInput.value = '';
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // Send to Firebase
+        // Send to Firebase (simulated)
         FirebaseAPI.addEmergencyMessage(activeEmergency.id, message, 'user');
 
         // Simulate responder reply
@@ -989,50 +735,26 @@ function syncPendingData() {
 }
 
 function listenToEmergencyUpdates(emergencyId) {
-    // Listen for real-time updates from Firebase
+    // This would listen for real-time updates from Firebase
     console.log('Listening for emergency updates:', emergencyId);
     
-    try {
-        // Set up real-time listener
-        const unsubscribe = FirebaseAPI.subscribeToEmergency(emergencyId, (emergency) => {
-            console.log('Emergency updated:', emergency);
-            
-            // Update UI based on emergency status
-            if (emergency.status === 'resolved') {
-                updateStatus('Emergency resolved');
-                activeEmergency = null;
-                document.getElementById('active-emergency').classList.add('hidden');
-            } else if (emergency.status === 'cancelled') {
-                updateStatus('Emergency cancelled');
-                activeEmergency = null;
-                document.getElementById('active-emergency').classList.add('hidden');
-            }
-        });
+    // Simulate periodic updates
+    const updateInterval = setInterval(() => {
+        if (!activeEmergency || activeEmergency.id !== emergencyId) {
+            clearInterval(updateInterval);
+            return;
+        }
         
-        // Store unsubscribe function for cleanup
-        activeEmergency.unsubscribe = unsubscribe;
+        // Simulate status updates
+        const statuses = ['Dispatching', 'Responder assigned', 'Responder en route', 'Help arrived'];
+        const currentStatusIndex = statuses.findIndex(s => s === activeEmergency.status);
         
-    } catch (error) {
-        console.error('Error setting up emergency listener:', error);
-        
-        // Fallback to simulated updates
-        const updateInterval = setInterval(() => {
-            if (!activeEmergency || activeEmergency.id !== emergencyId) {
-                clearInterval(updateInterval);
-                return;
-            }
-            
-            // Simulate status updates
-            const statuses = ['Dispatching', 'Responder assigned', 'Responder en route', 'Help arrived'];
-            const currentStatusIndex = statuses.findIndex(s => s === activeEmergency.status);
-            
-            if (currentStatusIndex < statuses.length - 1) {
-                const nextStatus = statuses[currentStatusIndex + 1];
-                activeEmergency.status = nextStatus;
-                updateStatus(nextStatus);
-            }
-        }, 30000); // Update every 30 seconds
-    }
+        if (currentStatusIndex < statuses.length - 1) {
+            const nextStatus = statuses[currentStatusIndex + 1];
+            activeEmergency.status = nextStatus;
+            updateStatus(nextStatus);
+        }
+    }, 30000); // Update every 30 seconds
 }
 
 // Utility functions
@@ -1100,6 +822,17 @@ function hideEmergencyModal() {
     document.getElementById('emergency-modal').classList.add('hidden');
 }
 
+// Export functions for use in other modules (if using ES6 modules)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        initializeApp,
+        requestLocation,
+        showNearbyHelp,
+        confirmEmergency,
+        cancelEmergency
+    };
+}
+
 // Service Worker Registration for PWA functionality
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -1127,49 +860,3 @@ async function requestNotificationPermission() {
 
 // Call this during app initialization
 requestNotificationPermission();
-
-// Test function for database structure
-async function testDatabaseStructure() {
-    try {
-        console.log('Testing database structure...');
-        
-        // Test user profile creation
-        const userProfile = await FirebaseAPI.createUserProfile({
-            name: 'Test User',
-            phone: '+260977123456'
-        });
-        console.log('✓ User profile created:', userProfile);
-        
-        // Test emergency creation
-        const emergency = await FirebaseAPI.createEmergency({
-            type: 'medical',
-            priority: 'P1',
-            location: { lat: -15.3875, lng: 28.3228 },
-            description: 'Test emergency'
-        });
-        console.log('✓ Emergency created:', emergency);
-        
-        // Test message sending
-        const message = await FirebaseAPI.sendMessage(
-            emergency.id,
-            'This is a test message'
-        );
-        console.log('✓ Message sent:', message);
-        
-        console.log('🎉 All tests passed!');
-    } catch (error) {
-        console.error('❌ Test failed:', error);
-    }
-}
-
-// Export functions for use in other modules (if using ES6 modules)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        initializeApp,
-        requestLocation,
-        showNearbyHelp,
-        confirmEmergency,
-        cancelEmergency,
-        testDatabaseStructure
-    };
-}
