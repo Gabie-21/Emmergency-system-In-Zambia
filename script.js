@@ -1,7 +1,25 @@
 // main.js - Updated main script with Firebase integration
 
-// Import Firebase functions (you'll need to set up ES6 modules or use script tags)
-// For now, we'll simulate the Firebase calls until you set up the actual Firebase project
+// main.js - Updated main script with Firebase integration
+
+// main.js - Updated main script with Firebase integration
+
+// Import Firebase SDK
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+
+// Import your configuration
+import { firebaseConfig, COLLECTIONS, EMERGENCY_TYPES, EMERGENCY_PRIORITIES } from './firebase-config.js';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const analytics = getAnalytics(app);
+
+// Your emergency response functions
 
 // Global state
 let currentLocation = null;

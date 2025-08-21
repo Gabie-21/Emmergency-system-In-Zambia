@@ -1,0 +1,206 @@
+{
+  "name": "Zambia Emergency Response",
+  "short_name": "Emergency",
+  "description": "Community-based emergency response system for Zambia",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#dc2626",
+  "background_color": "#ffffff",
+  "lang": "en-US",
+  "categories": ["health", "utilities", "safety"],
+  
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Medical Emergency",
+      "short_name": "Medical",
+      "description": "Report medical emergency",
+      "url": "/?emergency=medical",
+      "icons": [
+        {
+          "src": "/icons/medical-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Fire Emergency",
+      "short_name": "Fire",
+      "description": "Report fire emergency",
+      "url": "/?emergency=fire",
+      "icons": [
+        {
+          "src": "/icons/fire-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Police Emergency",
+      "short_name": "Police",
+      "description": "Report police emergency",
+      "url": "/?emergency=police",
+      "icons": [
+        {
+          "src": "/icons/police-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Find Help",
+      "short_name": "Help",
+      "description": "Find nearby emergency services",
+      "url": "/?action=find-help",
+      "icons": [
+        {
+          "src": "/icons/help-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "/screenshots/emergency-report.png",
+      "sizes": "320x640",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Emergency reporting interface"
+    },
+    {
+      "src": "/screenshots/responder-tracking.png",
+      "sizes": "320x640",
+      "type": "image/png",
+      "form_factor": "narrow", 
+      "label": "Real-time responder tracking"
+    },
+    {
+      "src": "/screenshots/emergency-chat.png",
+      "sizes": "320x640",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Emergency communication chat"
+    }
+  ],
+  
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.example.emergency",
+      "id": "com.example.emergency"
+    }
+  ],
+  
+  "prefer_related_applications": false,
+  
+  "protocol_handlers": [
+    {
+      "protocol": "tel",
+      "url": "/call?number=%s"
+    },
+    {
+      "protocol": "sms", 
+      "url": "/sms?number=%s"
+    }
+  ],
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  
+  "file_handlers": [
+    {
+      "action": "/handle-image",
+      "accept": {
+        "image/*": [".jpg", ".jpeg", ".png", ".gif"]
+      },
+      "icons": [
+        {
+          "src": "/icons/image-handler.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ],
+  
+  "share_target": {
+    "action": "/share-emergency",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*"]
+        }
+      ]
+    }
+  }
+}
