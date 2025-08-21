@@ -11,74 +11,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-
-    <!-- Firebase v9 SDK -->
-    <script type="module">
-        // Import the functions you need from the SDKs
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js';
-        import {
-            getFirestore,
-            collection,
-            doc,
-            setDoc,
-            getDoc,
-            getDocs,
-            updateDoc,
-            query,
-            where,
-            orderBy,
-            onSnapshot
-        } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-        import { getStorage } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyATFnJ_nufdoN4QAcYLjxsZd-eANz988B8",
-            authDomain: "zambia-emergency-response.firebaseapp.com",
-            projectId: "zambia-emergency-response",
-            storageBucket: "zambia-emergency-response.firebasestorage.app",
-            messagingSenderId: "746207632001",
-            appId: "1:746207632001:web:11754eaed394e960708b80",
-            measurementId: "G-BLS7RYQKVB"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-        const analytics = getAnalytics(app);
-
-        // Make Firebase services available globally for use in script.js
-        window.firebase = {
-            app,
-            auth,
-            db,
-            storage,
-            analytics,
-            // Export Firebase functions for use in external scripts
-            signInAnonymously,
-            onAuthStateChanged,
-            collection,
-            doc,
-            setDoc,
-            getDoc,
-            getDocs,
-            updateDoc,
-            query,
-            where,
-            orderBy,
-            onSnapshot
-        };
-
-        // Auto sign-in anonymously
-        signInAnonymously(auth).catch((error) => {
-            console.error('Error signing in anonymously:', error);
-        });
-    </script>
 </head>
 
 <body class="bg-zambia min-h-screen flex flex-col">
@@ -214,9 +146,23 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
-    <script src="sw.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Load main script as module -->
+    <script type="module" src="main.js"></script>
+
+    <!-- Service Worker (not as module) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function (registration) {
+                        console.log('ServiceWorker registration successful: ', registration.scope);
+                    })
+                    .catch(function (error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>
