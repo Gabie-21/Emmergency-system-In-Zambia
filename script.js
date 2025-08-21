@@ -19,6 +19,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
+
 // Your emergency response functions
 
 // Global state
