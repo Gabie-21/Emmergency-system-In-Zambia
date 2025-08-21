@@ -146,23 +146,43 @@
         </div>
     </footer>
 
-    <!-- Load main script as module -->
-    <script type="module" src="script.js"></script>
-
-    <!-- Service Worker (not as module) -->
+<script src="script.js"></script>
+<script>
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        });
+    }
+</script>
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(function (registration) {
-                        console.log('ServiceWorker registration successful: ', registration.scope);
-                    })
-                    .catch(function (error) {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
-            });
-        }
+        // Initialize Tailwind CSS
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zambia: '#dc2626',
+                    },
+                },
+            },
+        };
     </script>
+    <script>
+        // Initialize Leaflet map
+        const map = L.map('map').setView([-15.3875, 28.3228], 6); // Centered on Zambia
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    </script>
+    
 </body>
 
 </html>
